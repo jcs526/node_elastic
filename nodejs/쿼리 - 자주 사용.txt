@@ -1,0 +1,469 @@
+//node의 상태 조회
+GET _nodes/stats/fs
+
+//모든 templates 내용 조회
+GET _cat/templates
+
+//특정 template 내용 조회
+GET _template/approcomplete
+
+//특정 template 내용 추가
+PUT /_template/temp_approcomplete?include_type_name=false
+{
+	"order": 1,
+	"index_patterns": [
+		"approcomplete"
+	],
+	"settings": {
+		"index.mapping.total_fields.limit": 100000,
+		"index": {
+			"max_result_window": "10000000",
+			"refresh_interval": "1s",
+			"number_of_shards": "5",
+			"number_of_replicas": "0",
+			"analysis": {
+				"analyzer": {
+					"my_customer_ngram_analyzer": {
+						"filter": [
+							"lowercase",
+							"classic",
+							"trim"
+						],
+						"tokenizer": "my_customer_ngram_tokenizer"
+					}
+				},
+				"tokenizer": {
+					"my_customer_ngram_tokenizer": {
+						"type": "ngram"
+					}
+				}
+			},
+			"blocks": {
+				"read_only_allow_delete": false
+			}
+		}
+	},
+	"mappings": {
+		"dynamic_date_formats": [
+			"yyyyMMdd'T'HHmmss"
+		],
+		"dynamic_templates": [
+			{
+				"integers": {
+					"match_mapping_type": "long",
+					"mapping": {
+						"type": "long"
+					}
+				}
+			},
+			{
+				"dates": {
+					"mapping": {
+						"type": "date",
+						"format": "yyyyMMdd'T'HHmmss"
+					}
+				}
+			},
+			{
+				"strings": {
+					"match_mapping_type": "string",
+					"mapping": {
+						"type": "keyword",
+						"fields": {
+							"contains": {
+								"type": "text"
+							},
+							"search": {
+								"search_analyzer": "my_customer_ngram_analyzer",
+								"analyzer": "my_customer_ngram_analyzer",
+								"type": "text"
+							}
+						}
+					}
+				}
+			}
+		]
+	}
+}
+
+//특정 template 내용 삭제
+DELETE _template/approcomplete
+
+//특정 index settings 내용 조회
+GET approcomplete/_settings
+
+//특정 index mapping 내용 조회
+GET approcomplete/_mapping
+
+//특정 index 활성화 수행
+POST approcomplete/_open
+
+//특정 index 비활성화 수행
+POST approcomplete/_close
+
+//특정 index 활성화/비활성화 상태 조회
+GET approcomplete/_stats
+
+//모든 index 내용 조회
+GET /_cat/indices?v
+
+//특정 index 내용 조회
+GET /_cat/indices/approcomplete?v
+
+//특정 index 내용 조회하는데 용량의 단위는 mb
+GET /_cat/indices/approcomplete?v&bytes=mb
+
+//특정 index 삭제
+DELETE approcomplete
+
+//특정 index 추가 : 문서 없는 DB
+PUT /approcomplete
+
+//특정 index 추가 : 문서 있는 DB
+PUT /approcomplete/_doc/638DA27CA5AD2523492587EC002269FA
+{
+	"_universalid": "638DA27CA5AD2523492587EC002269FA"
+}
+
+//★주의 : 해당작업은 삭제된 문서가 존재하는 segment를 병합하는 내용으로 디스크 용량이 확보된 상황에서 수행
+//segment 1개당 최대 5G으로 비용되는 I.O 용량 산정하고 수행
+POST /approcomplete/_forcemerge?only_expunge_deletes=true
+
+//모든 index를 관리하는 cluster의 설정에서 최대용량 한계치를 정의 : 홍수단계 정의 : 기본값 95%
+//기본값 95%을 100%으로 설정을 원하면 아래 내용으로 수행
+PUT _cluster/settings
+{
+	"transient": {
+		"cluster.routing.allocation.disk.watermark.flood_stage": "100%"
+	}
+}
+
+//특정 index에서 사용이 되는 필드의 제한 수를 정의 : 기본값 100
+PUT /approcomplete/_settings
+{
+  "index.mapping.total_fields.limit": 100000
+}
+
+//reindex 수행 내용으로 원본 Data를 dest index에 새롭게 복사
+POST _reindex?wait_for_completion=false
+{
+  "source": {
+    "index": "sample_2018"
+  },
+  "dest": {
+    "index": "appro_2018"
+  }
+}
+
+//전체 tasks 내용 조회
+GET _tasks?detailed=true&actions=*reindex
+
+//특정 tasks 내용 조회
+//GET _tasks/NodeID:ID
+GET _tasks/sy9zMgWoT7eXbJAJWSkC8w:46836316
+
+//특정 index에 새로운 field에 대한 매핑 정보를 입력하는 내용 - 텍스트 유형
+PUT /approcomplete/_mapping
+{
+	"properties": {
+		"allfieldvalue1": {
+			"type": "keyword",
+			"fields": {
+				"search": {
+					"search_analyzer": "my_customer_ngram_analyzer",
+					"analyzer": "my_customer_ngram_analyzer",
+					"type": "text"
+				}
+			}
+		}
+	}
+}
+
+//특정 index에 새로운 field에 대한 매핑 정보를 입력하는 내용 - 날짜 유형
+PUT /approcomplete/_mapping
+{
+	"properties": {
+		"allfieldvalue1": {
+			"type": "date",
+			"format": "8yyyyMMdd'T'HHmmss"
+		}
+	}
+}
+
+//특정 index에서 특정 field의 값을 제거하는 내용
+POST approcomplete/_update_by_query
+{
+  "script": {
+    "inline": "ctx._source.remove(\"allfieldvalue1\");ctx._source.remove(\"allfieldvalue2\");",
+    "lang": "painless"
+  }
+}
+
+//특정 index에서 query 조건에 맞는 문서들에 대해서 특정 field의 값을 제거
+POST approcompletedev/_update_by_query
+{
+  "script": {
+    "inline": "ctx._source.remove(\"allfieldvalue1\");ctx._source.remove(\"allfieldvalue2\");",
+    "lang": "painless"
+  },
+  "query": {
+		"bool": {
+			"must": [
+				{
+					"term": {
+						"_filepath": "ds_10/emate_app/apprbox/2021/apprboxcost_12.nsf"
+					}
+				}
+			]
+		}
+	}
+}
+
+//특정 index에서 query 조건에 맞는 문서들에 대해서 특정 field의 값을 변경
+POST approcompletedev/_update_by_query
+{
+	"script": {
+		"source": "ctx._source['begin_day'] = '20211020T000000';ctx._source['end_day'] = '20220531T000000'",
+		"lang": "painless"
+	},
+	"query": {
+		"bool": {
+			"filter": [
+				{
+					"bool": {
+						"should": [
+							{
+								"term": {
+									"_universalid" : "859D228B6FFBED234925876F0041856F"
+								}
+							}
+						],
+						"minimum_should_match": 1
+					}
+				}
+			]
+		}
+	}
+}
+
+//특정 index 특정 조건에 맞는 문서만 삭제
+POST /approcomplete/_doc/_delete_by_query
+{
+	"query": {
+		"bool": {
+			"must": [
+				{
+					"term": {
+						"_universalid": "638DA27CA5AD2523492587EC002269FA"
+					}
+				}
+			]
+		}
+	}
+}
+
+//특정 index 모든 내용 조회
+GET /approcomplete/_doc/_search
+{
+	"track_total_hits": true
+}
+
+//특정 index 모든 내용 조회할때 시작점 끝지점 정하여 조회
+GET /approcomplete/_doc/_search
+{
+	"from": "0",
+	"size": "200000",
+	"track_total_hits": true
+}
+
+//특정 index 조건 내용 조회
+GET /approcomplete/_doc/_search
+{
+	"query": {
+		"bool": {
+			"filter": [
+				{
+					"term": {
+						"XXX": "2"
+					}
+				}
+			]
+		}
+	},
+	"track_total_hits": true
+}
+
+//특정 index _filepath 조건으로 내용 조회
+GET /approcomplete/_doc/_search
+{
+	"query": {
+		"bool": {
+			"filter": [
+				{
+					"term": {
+						"_filepath": "ds_10/emate_app/apprbox/2022/apprboxcost_01.nsf"
+						
+					}
+				}
+			]
+		}
+	},
+	"track_total_hits": true
+}
+
+//특정 index _universalid 조건으로 내용 조회
+GET /approcomplete/_doc/_search
+{
+	"query": {
+		"bool": {
+			"filter": [
+				{
+					"term": {
+						"_universalid": "ds_10/emate_app/apprbox/2022/apprboxcost_01.nsf"
+						
+					}
+				}
+			]
+		}
+	},
+	"track_total_hits": true
+}
+
+//특정 index 날짜 조건 completedate 으로 조회
+GET /approcomplete/_doc/_search
+{
+	"query": {
+		"bool": {
+			"must": [
+				{
+					"range": {
+						"completedate": {
+							"gte": "20220316T150000",
+							"lte": "20220317T145959"
+						}
+					}
+				}
+			]
+		}
+	},
+	"track_total_hits": true
+}
+
+//특정 index 날짜 조건 completedate 으로 조회하면서 completedate으로 정렬
+GET /approcomplete/_doc/_search
+{
+	"query": {
+		"bool": {
+			"must": [
+				{
+					"range": {
+						"completedate": {
+							"gte": "20220316T150000",
+							"lte": "20220317T145959"
+						}
+					}
+				}
+			]
+		}
+	},
+	"track_total_hits": true,
+	"sort": [
+		{
+			"completedate": {
+				"order": "desc"
+			}
+		}
+	]
+}
+
+//특정 index 일반조건 + 날짜 조건 completedate 으로 조회하면서 completedate으로 정렬
+{
+	"query": {
+		"bool": {
+			"filter": [
+				{
+					"term": {
+						"docstatus": "AC"
+					}
+				}
+			],
+			"must": [
+				{
+					"range": {
+						"completedate": {
+							"gte": "20220316T150000",
+							"lte": "20220317T145959"
+						}
+					}
+				}
+			]
+		}
+	},
+	"track_total_hits": true,
+	"sort": [
+		{
+			"completedate": {
+				"order": "desc"
+			}
+		}
+	]
+}
+
+//전체검색 : => subject, from 2개의 필드에서 FullText 검색
+GET /approvaldocs/_doc/_search
+{
+	"query": {
+		"bool": {
+			"must": [
+				{
+					"multi_match": {
+						"query": "샘플 데이터 제목",
+						"type": "phrase",
+						"fields": [
+							"subject.search",
+							"from.search"
+						]
+					}
+				}
+			]
+		}
+	},
+	"from": "0",
+	"size": "15",
+	"track_total_hits": true
+}
+
+
+
+
+GET /approvaldocs/_doc/_search
+{
+	"_source": {
+		"includes": [
+			"obj1.*",
+			"obj2.*"
+		],
+		"excludes": [
+			"*_vc*"
+		]
+	},
+	"query": {
+		"bool": {
+			"must": [
+				{
+					"multi_match": {
+						"query": "샘플 데이터 제목",
+						"type": "phrase",
+						"fields": [
+							"subject.search",
+							"from.search"
+						]
+					}
+				}
+			]
+		}
+	},
+	"from": "0",
+	"size": "15",
+	"track_total_hits": true
+}

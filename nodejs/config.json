@@ -1,0 +1,8 @@
+{
+    "port" : 19900,
+    "elastic" : {
+        "user" : "elastic",
+        "password" : "123!@#qwe",
+        "url" : "http://127.0.0.1:19200/board/_doc/_search"
+    }
+}
