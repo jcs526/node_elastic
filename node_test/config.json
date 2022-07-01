@@ -1,0 +1,11 @@
+{
+    "port" : 19901,
+    "baseURL" : "http://127.0.0.1:19200",
+    "getList" : "/board/_doc/_search",
+    "write" : "/board/_doc/",
+    "delete" : "/board/_doc/_delete_by_query",
+    "elastic" :{
+        "id" : "elastic",
+        "password" : "123!@#qwe"
+    }
+}
