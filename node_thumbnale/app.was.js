@@ -2,7 +2,7 @@ const express = require("express");
 var bodyParser = require('body-parser');
 var ffmpeg = require('fluent-ffmpeg');
 const cors = require('cors');
-const fs = require("fs");
+const fs = require("fs").promises;
 
 
 
@@ -31,7 +31,7 @@ app.get("*", (req, res) => {
     res.sendFile(__dirname + '/index.html');
 })
 
-app.post("*", (req, res) => {
+app.post("*", async (req, res) => {
     console.log("post 오긴옴");
     ffmpeg(__dirname + '/path/sample.mp4')
         .on('filenames', function (filenames) {
@@ -65,29 +65,31 @@ app.post("*", (req, res) => {
     // )
 
     let filename = [];
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 10; i++) {
         filename.push(`./path/tn_${i}.png`)
     }
     console.log(filename);
     res.writeHead(200, { "Content-Type": "image/png" });
     let qObj = [];
     
-    for (let file of filename) {
+    for await (let [i, file] of filename.entries()) {
         fs.readFile(file,
             (err, data) => {
+                console.log(i,"되곤있나?");
                 console.log(data);
                 qObj.push(data.toString())
                 console.log("write쏨",file);
+                return i;
             }
-        )
+        ).then(res=>console.log(i))
     }
 
     console.log("qObj : ", qObj);
 
     setTimeout(() => {
         console.log("res 종료");
-        console.log(qObj);
-        res.end(qObj)
+        // console.log(qObj);
+        res.end()
     },5000)
 
 })
