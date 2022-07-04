@@ -61,12 +61,13 @@ export default {
     // let {duration} = $video
     let check = new Set();
 
-    let checkComplete = setInterval(() => timeCheck(), 1000);
+    let checkComplete = setInterval(() => timeCheck(), 500);
     let thisComponent = this;
     function timeCheck() {
       let { currentTime, duration } = $video;
       if (!isNaN(currentTime)) check.add(Math.floor(currentTime));
-      console.log(check);
+      // console.log(check);
+      console.log(currentTime);
       // document.querySelector('p').innerHTML = Math.floor(check.size/duration*100)+"%";
       thisComponent.percent = Math.floor((check.size / duration) * 100);
 
