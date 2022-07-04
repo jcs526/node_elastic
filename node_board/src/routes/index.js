@@ -4,6 +4,7 @@ import BoardList from '../components/BoardList'
 import WriteArticle from '../components/WriteArticle'
 import ReadArticle from '../components/ReadArticle'
 import ModifyArticle from '../components/ModifyArticle'
+import StreamTest from '../components/StreamTest'
 import { store } from '../store/store'
 
 Vue.use(VueRouter);
@@ -44,5 +45,10 @@ export const router = new VueRouter({
             component: ModifyArticle,
             name: 'ModifyArticle'
         },
+        {
+            path: '/stream',
+            component: StreamTest,
+            name: 'StreamTest'
+        }
     ]
 })

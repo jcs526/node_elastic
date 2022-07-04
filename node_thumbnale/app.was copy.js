@@ -29,6 +29,9 @@ let server = app.listen(port, () => {
     console.log(port, "번 포트로 실행중!");
 })
 
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+})
 
 app.get("/video", (req, res) => {
     const range = req.headers.range;
