@@ -25,7 +25,9 @@ export default {
         content: this.content,
         date : new Date(),
       };
+      console.log("formData",formData);
       let data = JSON.stringify(formData);
+      console.log("data",data);
       this.$store.dispatch('writeArticle',{data:data});
     },
   },

@@ -42,7 +42,7 @@ export const store = new Vuex.Store({
                     context.commit('SET_BOARD_LIST', res.data);
                     if (routerName !== "SearchList")
                         router.push('/search');
-                        bus.$emit('end:spinner');
+                    bus.$emit('end:spinner');
                 });
         },
         delete(context, id) {
@@ -71,6 +71,7 @@ export const store = new Vuex.Store({
         },
 
         writeArticle(context, { data }) {
+            console.log("store",data);
             bus.$emit('start:spinner');
             fetch_write(data)
                 .then((res) => {

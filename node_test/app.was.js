@@ -28,65 +28,65 @@ let server = app.listen(port, () => {
     console.log(port, "번 포트로 실행중!");
 })
 
-app.get("/list", async (req, res) => {
-    let qObj = reqURL.query;
-    getList(req, res, qObj);
-    return;
-})
+// app.get("/list", async (req, res) => {
+//     let qObj = reqURL.query;
+//     getList(req, res, qObj);
+//     return;
+// })
 
-function getList(req, res, qObj) {
-    let url = config.baseURL + config.getList;
-    const auth = config.elastic.id + ":" + config.elastic.password;
-    let authorization = Buffer.from(auth, "utf8").toString("base64");
-    let jsonData = {
-        "from": "0",
-        "size": "40",
-        "track_total_hits": true
-    }
+// function getList(req, res, qObj) {
+//     let url = config.baseURL + config.getList;
+//     const auth = config.elastic.id + ":" + config.elastic.password;
+//     let authorization = Buffer.from(auth, "utf8").toString("base64");
+//     let jsonData = {
+//         "from": "0",
+//         "size": "40",
+//         "track_total_hits": true
+//     }
 
-    let postData = JSON.stringify(jsonData);
+//     let postData = JSON.stringify(jsonData);
 
-    let options = {
-        url: url,
-        method: 'POST',
-        headers: {
-            Authorization: 'Basic ' + authorization,
-            'Content-Type': 'application/json'
-        },
-        data: postData
-    };
+//     let options = {
+//         url: url,
+//         method: 'POST',
+//         headers: {
+//             Authorization: 'Basic ' + authorization,
+//             'Content-Type': 'application/json'
+//         },
+//         data: postData
+//     };
 
-    axios(options)
-        .then((response) => {
-            let jsonData = [];
-            response.data.hits.hits.forEach((v) => {
-                let date = v._source.date.split('-');
-                let parseDate = [];
-                parseDate.push(date[0])
-                parseDate.push("년 ")
-                parseDate.push(date[1])
-                parseDate.push("월 ")
-                parseDate.push(date[2].split('T')[0])
-                parseDate.push("일 ")
-                parseDate.push(date[2].split('T')[1].split('.')[0])
+//     axios(options)
+//         .then((response) => {
+//             let jsonData = [];
+//             response.data.hits.hits.forEach((v) => {
+//                 let date = v._source.date.split('-');
+//                 let parseDate = [];
+//                 parseDate.push(date[0])
+//                 parseDate.push("년 ")
+//                 parseDate.push(date[1])
+//                 parseDate.push("월 ")
+//                 parseDate.push(date[2].split('T')[0])
+//                 parseDate.push("일 ")
+//                 parseDate.push(date[2].split('T')[1].split('.')[0])
 
-                let data = {
-                    "id": v._id,
-                    "title": v._source.title,
-                    "writer": v._source.writer,
-                    "date": parseDate.join(""),
-                    "content": v._source.content
-                }
-                jsonData.push(data);
-            });
+//                 let data = {
+//                     "id": v._id,
+//                     "title": v._source.title,
+//                     "writer": v._source.writer,
+//                     "date": parseDate.join(""),
+//                     "content": v._source.content
+//                 }
+//                 jsonData.push(data);
+//             });
 
-            res.end(JSON.stringify(jsonData));
-            return;
-        })
-        .catch(err => {
-            console.log(err);
-        })
-}
+//             res.end(JSON.stringify(jsonData));
+//             return;
+//         })
+//         .catch(err => {
+//             console.log(err);
+//         })
+// }
 
 app.post("/write", async (req, res) => {
     writeArticle(req, res);
@@ -105,6 +105,8 @@ function writeArticle(req, res) {
         "date": req.body.date
     }
     let postData = JSON.stringify(jsonData);
+    console.log(req.body);
+    console.log(postData);
 
     let options = {
         url: url,
@@ -238,9 +240,10 @@ function searchArticle(req,res) {
     axios(options)
         .then((response) => {
             let jsonData = [];
-            response.data.hits.hits.forEach((v) => {
-                let date = v._source.date.split('-');
+            response.data.hits.hits.forEach((v,index) => {
+                let date = v._source.date.split('-')||'';
                 let parseDate = [];
+                console.log(date,index);
                 parseDate.push(date[0])
                 parseDate.push("년 ")
                 parseDate.push(date[1])

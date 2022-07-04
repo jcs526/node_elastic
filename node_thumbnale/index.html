@@ -8,12 +8,21 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
         <title>썸네일!!</title>
+        <style>
+            img {
+                width: 20%;
+                height: auto;
+
+            }
+        </style>
     </head>
 
     <body>
-        <div>dd
-            <img src="path/tn_1.png" alt="">
-            <img src="path/tn_1.png" alt="">dd
+        <div>
+            <video id="videoPlayer" width="650" controls muted="muted" autoplay>
+                <source src="/video" type="video/mp4" />
+            </video><br>
+            <p></p>
         </div>
         <button>썸네일 생성!!!</button>
 
@@ -29,27 +38,54 @@
             responseType:'blob'
         })
         .then((res) => {
-            console.log(res);
-            const url = window.URL.createObjectURL(new Blob([res.data], { type: res.headers['content-type'] } ));
-            img.src=url;
-            console.log("res.data : ",res.data);
-            console.log("url : ", url);
+            // console.log(res);
+            // const url = window.URL.createObjectURL(new Blob([res.data], { type: res.headers['content-type'] } ));
+            // img.src=url;
+            // console.log("res.data : ",res.data);
+            // console.log("url : ", url);
 
-            // setTimeout(()=>{
-            //     console.log(res)
-            //     for(let i = 1; i<=10; i++){
-            //     let img = document.createElement('img');
-            //     img.src="path/tn_"+`${i}`+".png";
-            //     document.querySelector('div').appendChild(img);
-            //     console.log(i);
-            // }
-            // },5000)
+            setTimeout(()=>{
+                console.log(res)
+                for(let i = 1; i<=10; i++){
+                let img = document.createElement('img');
+                img.src=`http://localhost:19903/tn_${i}.png`;
+                img.addEventListener('click',()=>{
+                    axios.get(`/thumbnail/${i}`)
+                    .then(console.log('선택완료'))
+                })
+                document.querySelector('div').appendChild(img);
+                console.log(i);
+            }
+            },5000)
             
         })
         .catch(e => {
             console.log(`error === ${e}`)
         })
         })
+
+        let $video = document.querySelector('video');
+        // let {duration} = $video
+        let check = new Set();
+
+        
+
+        let checkComplete = setInterval(()=>timeCheck(),1000)
+
+        function timeCheck() {
+            let {currentTime, duration} = $video
+            if(currentTime!==NaN)
+            check.add(Math.floor(currentTime));
+            console.log(check);
+            document.querySelector('p').innerHTML = Math.floor(check.size/duration*100)+"%";
+
+            if(check.size>=duration*0.95){
+                console.log("수료완료!");
+                 clearInterval(checkComplete);
+            }
+        }
+        // 시청기록 , 시청기록을 %로, 시청기록부터 보는 기능, 수료표시
+        
         </script>
     </body>
 

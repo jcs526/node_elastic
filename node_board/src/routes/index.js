@@ -43,6 +43,6 @@ export const router = new VueRouter({
             path: '/modify',
             component: ModifyArticle,
             name: 'ModifyArticle'
-        }
+        },
     ]
 })
