@@ -3,6 +3,7 @@
     <router-link to="/list">글 목록</router-link>|
     <router-link to="/write">글 쓰기</router-link>|
     <router-link to="/stream">동영상</router-link>|
+    <router-link to="/stream2">동영상2</router-link>|
     <select v-model="selectOption">
       <option value="title">제목</option>
       <option value="writer">작성자</option>

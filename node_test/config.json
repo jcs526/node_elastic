@@ -1,11 +1,16 @@
 {
-    "port" : 19901,
-    "baseURL" : "http://127.0.0.1:19200",
-    "getList" : "/board/_doc/_search",
-    "write" : "/board/_doc/",
-    "delete" : "/board/_doc/_delete_by_query",
-    "elastic" :{
-        "id" : "elastic",
-        "password" : "123!@#qwe"
+    "port": 19901,
+    "baseURL": "http://127.0.0.1:19200",
+    "getList": "/board/_doc/_search",
+    "write": "/board/_doc/",
+    "delete": "/board/_doc/_delete_by_query",
+    "stream": "/stream/_doc/",
+    "stream2": "/stream2/_doc/",
+    "getStream": "/stream/_search",
+    "getStream2": "/stream2/_search",
+    "deleteStream2" : "/stream2/_doc/_delete_by_query",
+    "elastic": {
+        "id": "elastic",
+        "password": "123!@#qwe"
     }
 }
