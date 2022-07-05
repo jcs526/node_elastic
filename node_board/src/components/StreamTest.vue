@@ -137,11 +137,32 @@ export default {
   },
 
   mounted() {
-    window.addEventListener("beforeunload", () => {});
     axios.get("http:127.0.0.1:19901/stream")
     .then((res)=>{
       console.log(res);
     })
+    
+
+    let $video = document.querySelector("video");
+    // let {duration} = $video
+    let check = new Set();
+
+    let checkComplete = setInterval(() => timeCheck(), 500);
+    let thisComponent = this;
+    function timeCheck() {
+      let { currentTime, duration } = $video;
+      if (!isNaN(currentTime)) check.add(Math.floor(currentTime));
+      // console.log(check);
+      console.log(currentTime);
+      // document.querySelector('p').innerHTML = Math.floor(check.size/duration*100)+"%";
+      thisComponent.percent = Math.floor((check.size / duration) * 100);
+
+      if (check.size >= duration * 0.95) {
+        thisComponent.complete = true;
+        clearInterval(checkComplete);
+      }
+    }
+    // 시청기록 , 시청기록을 %로, 시청기록부터 보는 기능, 수료표시
   },
 };
 </script>
