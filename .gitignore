@@ -24,3 +24,5 @@ pnpm-debug.log*
 *.sw?
 node_test/public/thumbnail
 node_thumbnale/path
+node_test/public
+node_thumbnale
