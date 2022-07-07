@@ -1,12 +1,14 @@
 <template>
   <div>
     <video
+      class="vidoe-js"
       width="650"
       controls
       muted="muted"
       startTime="20"
       @play="startPlay"
       @pause="pausePlay"
+      po
     >
       <!-- <source src="http://127.0.0.1:19901/video#t=20" type="video/mp4" /></video 동영상 20초부터 시작-->
       <source src="http://127.0.0.1:19901/video" type="video/mp4" /></video
@@ -26,7 +28,7 @@
     ><br />
     <button @click="submitData">제출</button>
     <button @click="deleteData">삭제</button><br /><br />
-    <button @click="thumbnail">썸네일 생성!</button>
+    <button @click="thumbnail">썸네일 생성!?</button>
   </div>
 </template>
 
@@ -43,6 +45,7 @@ export default {
       currentTime: 0,
       duration: 0,
       maxTime: 5,
+      name : "thumb"
     };
   },
 
@@ -120,13 +123,19 @@ export default {
       }
       console.log("pause");
     },
+
     thumbnail() {
       console.log("엑시오스 됨?");
-      axios({
+      this.currentTime = document.querySelector("video").currentTime;
+      let data = { timestamp: this.currentTime ,
+      name: this.name};
+      let option = {
         method: "POST",
-        url: "http://127.0.0.1:19901/thumbnail",
+        url: "http://127.0.0.1:19901/thumbnail2",
         responseType: "blob",
-      })
+        data: data,
+      };
+      axios(option)
         .then((res) => {
           // console.log(res);
           // const url = window.URL.createObjectURL(new Blob([res.data], { type: res.headers['content-type'] } ));
@@ -134,20 +143,13 @@ export default {
           // console.log("res.data : ",res.data);
           // console.log("url : ", url);
 
-          setTimeout(() => {
+          // setTimeout(() => {
             console.log(res);
-            for (let i = 1; i <= 10; i++) {
               let img = document.createElement("img");
-              img.src = `http://localhost:19901/thumbnail/tn_${i}.png`;
-              img.addEventListener("click", () => {
-                axios
-                  .get(`http://127.0.0.1:19901/thumbnail/${i}`)
-                  .then(console.log("선택완료"));
-              });
+              img.src = `http://localhost:19901/video/output/${this.name}-at-${this.currentTime}-seconds.png`;
               document.querySelector("div").appendChild(img);
-              console.log(i);
-            }
-          }, 5000);
+              // console.log(i);
+          // }, 1000);
         })
         .catch((e) => {
           console.log(`error === ${e}`);
@@ -162,8 +164,8 @@ export default {
       this.maxTime = res.data.maxTime;
       this.complete = res.data.complete;
       document.querySelector("video").currentTime = this.currentTime;
-      if(this.complete){
-        this.percent=95;
+      if (this.complete) {
+        this.percent = 95;
       }
     });
   },

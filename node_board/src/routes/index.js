@@ -6,6 +6,9 @@ import ReadArticle from '../components/ReadArticle'
 import ModifyArticle from '../components/ModifyArticle'
 import StreamTest from '../components/StreamTest'
 import StreamTest2 from '../components/StreamTest2'
+import StreamTest3 from '../components/StreamTest3'
+import StreamTest4 from '../components/StreamTest4'
+import ExcelDownload from '../components/ExcelDownload'
 import { store } from '../store/store'
 
 Vue.use(VueRouter);
@@ -55,6 +58,21 @@ export const router = new VueRouter({
             path: '/stream2',
             component: StreamTest2,
             name: 'StreamTest2',
-        }
+        },
+        {
+            path: '/stream3',
+            component: StreamTest3,
+            name: 'StreamTest3',
+        },
+        {
+            path: '/stream4',
+            component: StreamTest4,
+            name: 'StreamTest4',
+        },
+        {
+            path: '/excel',
+            component: ExcelDownload,
+            name: 'ExcelDownload',
+        },
     ]
 })

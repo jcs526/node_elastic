@@ -8,7 +8,9 @@ const { randomUUID } = require('crypto')
 var ffmpeg = require('fluent-ffmpeg');
 const fs = require("fs");
 const path = require('path');
+const Excel = require('exceljs');
 
+const workbook = new Excel.Workbook();
 
 let corsOption = {
     origin: 'http://localhost:8080',// 허락하는 요청 주소
@@ -32,66 +34,6 @@ app.use('/', express.static(path.join(__dirname, 'public')));
 let server = app.listen(port, () => {
     console.log(port, "번 포트로 실행중!");
 })
-
-// app.get("/list", async (req, res) => {
-//     let qObj = reqURL.query;
-//     getList(req, res, qObj);
-//     return;
-// })
-
-// function getList(req, res, qObj) {
-//     let url = config.baseURL + config.getList;
-//     const auth = config.elastic.id + ":" + config.elastic.password;
-//     let authorization = Buffer.from(auth, "utf8").toString("base64");
-//     let jsonData = {
-//         "from": "0",
-//         "size": "40",
-//         "track_total_hits": true
-//     }
-
-//     let postData = JSON.stringify(jsonData);
-
-//     let options = {
-//         url: url,
-//         method: 'POST',
-//         headers: {
-//             Authorization: 'Basic ' + authorization,
-//             'Content-Type': 'application/json'
-//         },
-//         data: postData
-//     };
-
-//     axios(options)
-//         .then((response) => {
-//             let jsonData = [];
-//             response.data.hits.hits.forEach((v) => {
-//                 let date = v._source.date.split('-');
-//                 let parseDate = [];
-//                 parseDate.push(date[0])
-//                 parseDate.push("년 ")
-//                 parseDate.push(date[1])
-//                 parseDate.push("월 ")
-//                 parseDate.push(date[2].split('T')[0])
-//                 parseDate.push("일 ")
-//                 parseDate.push(date[2].split('T')[1].split('.')[0])
-
-//                 let data = {
-//                     "id": v._id,
-//                     "title": v._source.title,
-//                     "writer": v._source.writer,
-//                     "date": parseDate.join(""),
-//                     "content": v._source.content
-//                 }
-//                 jsonData.push(data);
-//             });
-
-//             res.end(JSON.stringify(jsonData));
-//             return;
-//         })
-//         .catch(err => {
-//             console.log(err);
-//         })
-// }
 
 app.post("/write", async (req, res) => {
     writeArticle(req, res);
@@ -283,7 +225,7 @@ app.get("/video", (req, res) => {
     const videoPath = __dirname + "/public/video/sample.mp4"
     const videoSize = fs.statSync(__dirname + "/public/video/sample.mp4").size;
 
-    const CHUNK_SIZE = 20 ** 6;
+    const CHUNK_SIZE = 10 ** 6;
     const start = Number(range.replace(/\D/g, ""));
     const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
 
@@ -368,14 +310,39 @@ app.post("/thumbnail", async (req, res) => {
     //         }
     //     ).then(res=>console.log(i))
     // }
+});
 
-    // console.log("qObj : ", qObj);
+app.post("/thumbnail2", async (req, res) => {
+    console.log("post 오긴옴");
+    ffmpeg(__dirname + '/public/video/sample.mp4')
+        .on('filenames', function (filenames) {
+            console.log("전");
+            console.log('Will generate ' + filenames.join(', '))
+            console.log("후");
+            console.log(req.body);
+        })
+        .on('end', function () {
+            console.log('Screenshots taken');
+        })
+        // .screenshots({
+        //     // Will take screens at 20%, 40%, 60% and 80% of the video
+        //     count: 10,
+        //     folder: __dirname + '/public/thumbnail',
+        //     size: '320x?'
+        // });
+        .screenshots({
+            timestamps: [`${req.body.timestamp}`],
+            filename: req.body.name + '-at-%s-seconds.png',
+            folder: __dirname + '/public/video/output',
+            size: '320x?',
+            count: 1
+        });
 
-    setTimeout(() => {
-        console.log("res 종료");
-        // console.log(qObj);
-        res.end()
-    }, 5000)
+    // setTimeout(() => {
+    console.log("res 종료");
+    // console.log(qObj);
+    res.end()
+    // }, 5000)
 
 
 })
@@ -575,7 +542,7 @@ app.delete("/stream", (req, res) => {
                 "must": [
                     {
                         "term": {
-                            "_id" : "123"
+                            "_id": "123"
                         }
                     }
                 ]
@@ -599,5 +566,101 @@ app.delete("/stream", (req, res) => {
         .then(res.end())
 })
 
+app.get("/excel/:id", async (req, res) => {
+
+    let query =
+    {
+        "query": {
+            "bool": {
+                "filter": [
+                    {
+                        "term": {
+                            "_id": req.params.id
+                        }
+                    }
+                ]
+            }
+        },
+        "track_total_hits": true
+    }
+
+    let postData = JSON.stringify(query);
+    let url = config.baseURL + config.getStream2;
+    const auth = config.elastic.id + ":" + config.elastic.password;
+    let authorization = Buffer.from(auth, "utf8").toString("base64");
+
+
+    options = {
+        url: url,
+        method: 'GET',
+        headers: {
+            Authorization: 'Basic ' + authorization,
+            'Content-Type': 'application/json'
+        },
+        data: postData
+    }
+
+    
+
+    const workbook = new Excel.Workbook();
+    const worksheet = workbook.addWorksheet("My Sheet");
+
+    worksheet.columns = [
+        { header: '아이디', key: 'id', width: 10 },
+        { header: '현재시간', key: 'currentTime', width: 32 },
+        { header: '진행현황', key: 'maxTime', width: 15, },
+        { header: '수료현황', key: 'complete', width: 15, }
+    ];
+
+    axios(options)
+        .then(res => res.data.hits.hits.forEach((v) => {
+            console.log("Dd");
+            worksheet.addRow({
+                id: v._id,
+                currentTime: v._source.currentTime,
+                maxTime: v._source.maxTime,
+                complete: v._source.complete
+            });
+        }))
+        .catch(err => console.log(err))
+
+
+
+
+    // save under export.xlsx
+    await workbook.xlsx.writeFile('export.xlsx');
+    console.log("1번완료");
+
+
+
+    // load a copy of export.xlsx
+    // const newWorkbook = new Excel.Workbook();
+    // await newWorkbook.xlsx.readFile('export.xlsx');
+
+    // const newworksheet = newWorkbook.getWorksheet('My Sheet');
+    // console.log(newworksheet.getRow(4).getCell(2).value);
+    // newworksheet.columns = [
+    //     { header: 'Id11', key: 'id', width: 10 },
+    //     { header: 'Name', key: 'name', width: 32 },
+    //     { header: 'D.O.B.', key: 'dob', width: 15, }
+    // ];
+    // newworksheet.addRow({ id: 4, name: 'Jane Doe1', dob: new Date(1965, 1, 7) });
+    // await newWorkbook.xlsx.writeFile('export2.xlsx');
+
+
+
+    const file = fs.readFileSync('export.xlsx');
+    res.writeHead(200, {
+        "Content-type": `application/octet-stream`,
+        "Content-length": file.length,
+        "Content-Disposition": `attachment; filename="export2.xlsx"`,
+    });
+    res.end(file);
+
+
+    console.log("File is written");
+    console.log();
+
+})
 
 
