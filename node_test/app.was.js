@@ -614,22 +614,26 @@ app.get("/excel/:id", async (req, res) => {
 
     axios(options)
         .then(res => res.data.hits.hits.forEach((v) => {
-            console.log("Dd");
+            console.log("v는",v._id);
+            console.log(worksheet);
             worksheet.addRow({
-                id: v._id,
-                currentTime: v._source.currentTime,
-                maxTime: v._source.maxTime,
-                complete: v._source.complete
+                id: `${v._id}`,
+                currentTime: `${v._source.currentTime}`,
+                maxTime: `${v._source.maxTime}`,
+                complete: `${v._source.complete}`
             });
         }))
+        .then(res=>{
+            workbook.xlsx.writeFile('export.xlsx');
+            console.log("1번완료");
+        })
         .catch(err => console.log(err))
 
 
 
 
     // save under export.xlsx
-    await workbook.xlsx.writeFile('export.xlsx');
-    console.log("1번완료");
+  
 
 
 
