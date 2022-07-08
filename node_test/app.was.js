@@ -1,5 +1,9 @@
 const express = require("express");
 const url = require("url");
+const multer = require("multer");
+const formidable = require("formidable");
+
+
 const config = require("./config.json");
 const axios = require("axios");
 var bodyParser = require('body-parser')
@@ -10,7 +14,17 @@ const fs = require("fs");
 const path = require('path');
 const Excel = require('exceljs');
 
-const workbook = new Excel.Workbook();
+const storage = multer.memoryStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/')
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname)// 파일 원본이름 저장
+    }
+})
+
+const upload = multer({ storage: storage }); // 미들웨어 생성
+
 
 let corsOption = {
     origin: 'http://localhost:8080',// 허락하는 요청 주소
@@ -274,6 +288,7 @@ app.post("/thumbnail", async (req, res) => {
             folder: __dirname + '/public/thumbnail',
             size: '320x?'
         });
+    res.end()
     // .screenshots({
     //     timestamps: ['50%', '75%'],
     //     filename: 'thumbnail-at-%s-seconds.png',
@@ -600,7 +615,7 @@ app.get("/excel/:id", async (req, res) => {
         data: postData
     }
 
-    
+
 
     const workbook = new Excel.Workbook();
     const worksheet = workbook.addWorksheet("My Sheet");
@@ -614,7 +629,7 @@ app.get("/excel/:id", async (req, res) => {
 
     axios(options)
         .then(res => res.data.hits.hits.forEach((v) => {
-            console.log("v는",v._id);
+            console.log("v는", v._id);
             console.log(worksheet);
             worksheet.addRow({
                 id: `${v._id}`,
@@ -623,7 +638,7 @@ app.get("/excel/:id", async (req, res) => {
                 complete: `${v._source.complete}`
             });
         }))
-        .then(res=>{
+        .then(res => {
             workbook.xlsx.writeFile('export.xlsx');
             console.log("1번완료");
         })
@@ -633,7 +648,7 @@ app.get("/excel/:id", async (req, res) => {
 
 
     // save under export.xlsx
-  
+
 
 
 
@@ -654,6 +669,10 @@ app.get("/excel/:id", async (req, res) => {
 
 
     const file = fs.readFileSync('export.xlsx');
+
+    // 주석이 있으면 window.open()으로 실행할시 다운가능
+    // 없다면 zip파일이 다운로드 됨
+    // 주석여부와 상관없이 blob 타입으로 처리는 가능
     res.writeHead(200, {
         "Content-type": `application/octet-stream`,
         "Content-length": file.length,
@@ -666,5 +685,25 @@ app.get("/excel/:id", async (req, res) => {
     console.log();
 
 })
+
+app.post("/upload1", (req, res) => {
+    // req.file에 업로드한 파일 존재
+    req.on('readable', function(){
+    console.log(req.read());
+  });
+    res.end();
+});
+
+// API Endpoint for uploading file
+app.post("/api/upload", (req, res) => {
+    const form = new formidable.IncomingForm();
+    console.log(form);
+
+    const uploadFolder = path.join(__dirname, "public", "files");
+
+    form.multiples = true;
+    form.uploadDir = uploadFolder;
+    console.log(form);
+});
 
 

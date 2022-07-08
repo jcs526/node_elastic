@@ -1,12 +1,13 @@
 <template>
   <div>
-    <video-player class="video-player vjs-custom-skin"
-          ref="videoPlayer"
-          :playsinline="true"
-          :options="playerOptions"
-          @pause="pausePlay($event)"
-          @play="startPlay($event)"
-  ></video-player>
+    <video-player
+      class="video-player vjs-custom-skin"
+      ref="videoPlayer"
+      :playsinline="true"
+      :options="playerOptions"
+      @pause="pausePlay($event)"
+      @play="startPlay($event)"
+    ></video-player>
     <progress max="95" :value="percent"></progress>
     <p>{{ percent || 0 }}%</p>
     <div v-if="complete">수료완료!</div>
@@ -22,7 +23,7 @@
     ><br />
     <button @click="submitData">제출</button>
     <button @click="deleteData">삭제</button><br /><br />
-    <button @click="thumbnail">썸네일 생성!?</button>
+    <button @click="thumbnail">썸네일 생성</button>
   </div>
 </template>
 
@@ -38,37 +39,39 @@ export default {
       complete: false,
       currentTime: 0,
       duration: 0,
-      maxTime: 5,
-      name : "thumb",
-      playerOptions : {
-          playbackRates : [ 0.5, 1.0, 1.5, 2.0 ], //        
-          autoplay : false, //  true,           。
-          muted : false, //              。
-          loop : false, //           。
-          preload : 'auto', //       <video>                 。auto         ,        （       ）
-          language : 'zh-CN',
-          aspectRatio : '16:9', //           ，                 。          -           （  "16:9" "4:3"）
-          fluid : true, //  true ，Video.js player       。    ，             。
-          sources : [ {
-            type : "video/mp4",
-            src : 'http://127.0.0.1:19901/video' //url  
-          } ],
-          poster : "", //      
-          // width: document.documentElement.clientWidth,
-          notSupportedMessage : '        ，     ', //    Video.js               。
-          controlBar : {
-            timeDivider : true,//             
-            durationDisplay : true,//      
-            remainingTimeDisplay : false,//          
-            fullscreenToggle : true //    
-          }
-    },
-    }
+      maxTime: 0,
+      name: "thumb",
+      playerOptions: {
+        playbackRates: [0.5, 1.0, 1.5, 2.0], //
+        autoplay: false, //  true,           。
+        muted: false, //              。
+        loop: false, //           。
+        preload: "auto", //       <video>                 。auto         ,        （       ）
+        language: "zh-CN",
+        aspectRatio: "16:9", //           ，                 。          -           （  "16:9" "4:3"）
+        fluid: true, //  true ，Video.js player       。    ，             。
+        sources: [
+          {
+            type: "video/mp4",
+            src: "http://127.0.0.1:19901/video", //url
+          },
+        ],
+        poster: "", //
+        // width: document.documentElement.clientWidth,
+        notSupportedMessage: "        ，     ", //    Video.js               。
+        controlBar: {
+          timeDivider: true, //
+          durationDisplay: true, //
+          remainingTimeDisplay: false, //
+          fullscreenToggle: true, //
+        },
+      },
+    };
   },
   computed: {
-      player() {
-        return this.$refs.videoPlayer.player
-      }
+    player() {
+      return this.$refs.videoPlayer.player;
+    },
   },
   methods: {
     deleteData() {
@@ -149,8 +152,7 @@ export default {
     thumbnail() {
       console.log("엑시오스 됨?");
       this.currentTime = document.querySelector("video").currentTime;
-      let data = { timestamp: this.currentTime ,
-      name: this.name};
+      let data = { timestamp: this.currentTime, name: this.name };
       let option = {
         method: "POST",
         url: "http://127.0.0.1:19901/thumbnail2",
@@ -166,11 +168,11 @@ export default {
           // console.log("url : ", url);
 
           // setTimeout(() => {
-            console.log(res);
-              let img = document.createElement("img");
-              img.src = `http://localhost:19901/video/output/${this.name}-at-${this.currentTime}-seconds.png`;
-              document.querySelector("div").appendChild(img);
-              // console.log(i);
+          console.log(res);
+          let img = document.createElement("img");
+          img.src = `http://localhost:19901/video/output/${this.name}-at-${this.currentTime}-seconds.png`;
+          document.querySelector("div").appendChild(img);
+          // console.log(i);
           // }, 1000);
         })
         .catch((e) => {

@@ -9,6 +9,9 @@ import StreamTest2 from '../components/StreamTest2'
 import StreamTest3 from '../components/StreamTest3'
 import StreamTest4 from '../components/StreamTest4'
 import ExcelDownload from '../components/ExcelDownload'
+import UploadTest from '../components/UploadTest'
+import ChunkUploadTest from '../components/ChunkUploadTest'
+import FormidableTest from '../components/FormidableTest'
 import { store } from '../store/store'
 
 Vue.use(VueRouter);
@@ -26,7 +29,7 @@ export const router = new VueRouter({
             name: 'BoardList',
             beforeEnter: (to, from, next) => {
                 store.dispatch("search", { searchValue: "", selectOption: "title" })
-                .then(next());
+                    .then(next());
             }
         },
         {
@@ -73,6 +76,21 @@ export const router = new VueRouter({
             path: '/excel',
             component: ExcelDownload,
             name: 'ExcelDownload',
+        },
+        {
+            path: '/upload',
+            component: UploadTest,
+            name: 'UploadTest',
+        },
+        {
+            path: '/chunkupload',
+            component: ChunkUploadTest,
+            name: 'ChunkUploadTest',
+        },
+        {
+            path: '/formidable',
+            component: FormidableTest,
+            name: 'FormidableTest',
         },
     ]
 })
