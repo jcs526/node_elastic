@@ -6,6 +6,7 @@
       <input type="file" required="true" @change="fileChange" />
       <button type="submit">제출</button>
       <p>{{ numberOfChunks }}</p>
+      <p>{{ chunkCounter }}</p>
     </form>
   </div>
 </template>
@@ -18,7 +19,7 @@ export default {
       file: "",
       numberOfChunks: 0,
       chunkCounter: 0,
-      chunkSize: 200000,
+      chunkSize: 20000000,
       chunkStart: 0,
       chunkEnd: 0,
       chunkForm: new FormData(),
@@ -67,12 +68,13 @@ export default {
     },
 
     loop() {
+      this.chunkCounter++;
       this.end = this.start + this.chunkSize;
 
       if (this.file.size - this.end < 0) {
         this.end = this.file.size;
       }
-      console.log("start",this.start,"end",this.end);
+      console.log("start", this.start, "end", this.end);
       let s = this.fileSlice(this.file, this.start, this.end);
 
       this.sendChunk(s, this.start, this.end);
@@ -83,6 +85,8 @@ export default {
     },
 
     upload() {
+      this.numberOfChunks = Math.ceil(this.file.size / this.chunkSize);
+
       setTimeout(this.loop, 1);
 
       return;
