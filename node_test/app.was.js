@@ -28,7 +28,7 @@ const upload = multer({ storage: storage }); // 미들웨어 생성
 
 
 let corsOption = {
-    origin: 'http://localhost:8080',// 허락하는 요청 주소
+    origin: '*',// 허락하는 요청 주소
     credentials: true // true하면 프론트에 쿠키를 공유할수있게된다.
 }
 
@@ -688,12 +688,13 @@ app.get("/excel/:id", async (req, res) => {
 
 })
 
-let buffers = []
 app.post("/upload1", upload.single('file'), (req, res) => {
     // req.file에 업로드한 파일 존재
     buffers.splice(req.body.start, (req.body.end - req.body.start), req.file.buffer)
-    console.log(buffers.length);
-    console.log(req.body.chunkNumber);
+    // console.log(buffers.length);
+    // console.log(req.body.chunkNumber);
+    console.log(req.file.buffer);
+    console.log(buffers.join(' '));
     if (req.body.chunkNumber == buffers.length) {
         setTimeout(() => {
             buffers.join('')
@@ -707,7 +708,7 @@ app.post("/upload1", upload.single('file'), (req, res) => {
                 }
             })
             buffers = [];
-        }, 3000)
+        }, 500)
         res.end();
 
     } else
@@ -726,4 +727,41 @@ app.post("/api/upload", (req, res) => {
     console.log(form);
 });
 
+const writeStream = fs.createWriteStream('uploads/text.txt');
+const data = {};
+
+
+app.post("/upload2", upload.single('file'), (req, res) => {
+    data[`$${req.body.chunkCounter}`] = req.file.buffer
+    let result = [];
+    if (Object.keys(data).length == req.body.numberOfChunks
+    // &&req.body.chunkCounter==req.body.numberOfChunks-1
+    ) {
+        
+
+        console.log("dd");
+        for (let i = 1; i <= Object.keys(data).length; i++) {
+            result.push(data[`$${i}`]);
+        }
+        let buffers = Buffer.concat(Object.values(result));;
+        console.log(buffers);
+            fs.writeFile('uploads/test.mp4', buffers, (err) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log("저장완료");
+                }
+            })
+            res.end();
+    } else {
+        console.log("지나갑니다~");
+        // if(writeStream.length===req.body.totalSize){
+        //     writeStream.end()
+        // }
+
+        res.end();
+    }
+
+
+})
 

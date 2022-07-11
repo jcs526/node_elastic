@@ -26,7 +26,7 @@ export default {
       file: "",
       numberOfChunks: 0,
       chunkCounter: 0,
-      chunkSize: 10000000,
+      chunkSize: 2**15,
       chunkStart: 0,
       chunkEnd: 0,
       chunkForm: new FormData(),
@@ -61,14 +61,17 @@ export default {
     },
     noop() {},
     sendChunk(piece, start, end) {
+      console.log(this.file);
       let formData = new FormData();
       let xhr = new XMLHttpRequest();
 
-      xhr.open("POST", "http://127.0.0.1:19901/upload1", true);
+      xhr.open("POST", "http://127.0.0.1:19901/upload2", true);
 
       formData.append("start", start);
       formData.append("end", end);
-      formData.append("chunkNumber", this.numberOfChunks);
+      formData.append("numberOfChunks", this.numberOfChunks);
+      formData.append("chunkCounter", this.chunkCounter);
+      formData.append("totalSize", this.file.size);
       formData.append("file", piece);
 
       console.log(Array.from(formData.keys()));
