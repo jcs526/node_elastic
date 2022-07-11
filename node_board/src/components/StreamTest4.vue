@@ -9,8 +9,9 @@
       @play="startPlay($event)"
     ></video-player>
     <progress max="95" :value="percent"></progress>
-    <p>{{ percent || 0 }}%</p>
-    <div v-if="complete">수료완료!</div>
+
+    <p v-if="!complete">{{ percent || 0 }}%</p>
+    <div v-else-if="complete">수료완료!</div>
     <select v-model="speed" @change="controlSpeed(speed)">
       <option>1.0</option>
       <option>1.2</option>
@@ -42,7 +43,7 @@ export default {
       maxTime: 0,
       name: "thumb",
       playerOptions: {
-        playbackRates: [0.5, 1.0, 1.5, 2.0], //
+        // playbackRates: [0.5, 1.0, 1.5, 2.0], //
         autoplay: false, //  true,           。
         muted: false, //              。
         loop: false, //           。
@@ -117,10 +118,27 @@ export default {
     timeCheck() {
       if (!this.complete) {
         let $video = document.querySelector("video");
+        // Object.defineProperty($video,'playbackRate',{
+        //   set(speed){
+        //     this.playbackRate=speed;
+        //   }
+        // })
         this.currentTime = $video.currentTime;
         this.duration = $video.duration;
-        if ($video.currentTime > this.maxTime + 0.5 * this.speed) {
+        console.log($video.currentTime);
+        console.log(this.maxTime);
+        console.log("속도", $video.playbackRate);
+        if ($video.currentTime > this.maxTime + 0.5) {
+          $video.pause();
+          alert("비정상적인 움직임이 감지되었습니다.(시간)");
           $video.currentTime = this.maxTime;
+          $video.play();
+        } else if ($video.playbackRate > 1) {
+          $video.pause();
+          alert("비정상적인 움직임이 감지되었습니다.(속도)");
+          $video.currentTime = this.maxTime;
+          $video.playbackRate=1
+          $video.play();
         } else {
           this.maxTime =
             this.maxTime >= $video.currentTime
@@ -150,7 +168,6 @@ export default {
     },
 
     thumbnail() {
-      console.log("엑시오스 됨?");
       this.currentTime = document.querySelector("video").currentTime;
       let data = { timestamp: this.currentTime, name: this.name };
       let option = {
@@ -167,13 +184,12 @@ export default {
           // console.log("res.data : ",res.data);
           // console.log("url : ", url);
 
-          // setTimeout(() => {
-          console.log(res);
-          let img = document.createElement("img");
-          img.src = `http://localhost:19901/video/output/${this.name}-at-${this.currentTime}-seconds.png`;
-          document.querySelector("div").appendChild(img);
-          // console.log(i);
-          // }, 1000);
+          setTimeout(() => {
+            console.log(res);
+            let img = document.createElement("img");
+            img.src = `http://localhost:19901/video/output/${data.name}-at-${data.timestamp}-seconds.png`;
+            document.querySelector("div").appendChild(img);
+          }, 0);
         })
         .catch((e) => {
           console.log(`error === ${e}`);
@@ -182,15 +198,30 @@ export default {
   },
 
   mounted() {
-    window.addEventListener("beforeunload", () => {});
     axios.get("http://127.0.0.1:19901/stream2").then((res) => {
       this.currentTime = res.data.currentTime;
       this.maxTime = res.data.maxTime;
       this.complete = res.data.complete;
-      document.querySelector("video").currentTime = this.currentTime;
-      if (this.complete) {
-        this.percent = 95;
-      }
+      let $video = document.querySelector("video");
+      $video.currentTime = this.currentTime;
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+      var originalDescriptor = Object.getOwnPropertyDescriptor(
+        HTMLMediaElement.prototype,
+        "playbackRate"
+      );
+
+      Object.defineProperty(HTMLVideoElement.prototype, "playbackRate", {
+        set: function (value) {
+          if (value > 1) {
+            console.log(1 + "보다 커서 적용안함");
+            return;
+          }
+          originalDescriptor.set.call(this, 1);
+        },
+        get: originalDescriptor.get,
+      });
     });
   },
 };

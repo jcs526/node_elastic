@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import axios from "axios";
+// import axios from "axios";
 export default {
   data() {
     return {
@@ -84,24 +84,24 @@ export default {
 
       return;
 
-      const formData = new FormData();
-      formData.append("file", this.file);
+      // const formData = new FormData();
+      // formData.append("file", this.file);
 
-      let options = {
-        method: "post",
-        url: "http://127.0.0.1:19901/upload1",
-        data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      };
-      let startTime = new Date();
+      // let options = {
+      //   method: "post",
+      //   url: "http://127.0.0.1:19901/upload1",
+      //   data: formData,
+      //   headers: {
+      //     "Content-Type": "multipart/form-data",
+      //   },
+      // };
+      // let startTime = new Date();
 
-      axios(options).then((res) => {
-        console.log(res);
-        let endTime = new Date();
-        console.log("소요시간", (endTime - startTime) / 1000);
-      });
+      // axios(options).then((res) => {
+      //   console.log(res);
+      //   let endTime = new Date();
+      //   console.log("소요시간", (endTime - startTime) / 1000);
+      // });
     },
   },
 };

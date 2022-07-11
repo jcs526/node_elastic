@@ -2,6 +2,7 @@ const express = require("express");
 const url = require("url");
 const multer = require("multer");
 const formidable = require("formidable");
+const morgan = require("morgan");
 
 
 const config = require("./config.json");
@@ -43,7 +44,7 @@ app.use(bodyParser.json())
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOption));
 app.use('/', express.static(path.join(__dirname, 'public')));
-
+app.use(morgan("tiny"))
 
 let server = app.listen(port, () => {
     console.log(port, "번 포트로 실행중!");
@@ -281,6 +282,7 @@ app.post("/thumbnail", async (req, res) => {
         })
         .on('end', function () {
             console.log('Screenshots taken');
+            res.end()
         })
         .screenshots({
             // Will take screens at 20%, 40%, 60% and 80% of the video
@@ -288,7 +290,7 @@ app.post("/thumbnail", async (req, res) => {
             folder: __dirname + '/public/thumbnail',
             size: '320x?'
         });
-    res.end()
+
     // .screenshots({
     //     timestamps: ['50%', '75%'],
     //     filename: 'thumbnail-at-%s-seconds.png',
@@ -338,6 +340,7 @@ app.post("/thumbnail2", async (req, res) => {
         })
         .on('end', function () {
             console.log('Screenshots taken');
+            res.end()
         })
         // .screenshots({
         //     // Will take screens at 20%, 40%, 60% and 80% of the video
@@ -356,7 +359,6 @@ app.post("/thumbnail2", async (req, res) => {
     // setTimeout(() => {
     console.log("res 종료");
     // console.log(qObj);
-    res.end()
     // }, 5000)
 
 
@@ -686,12 +688,30 @@ app.get("/excel/:id", async (req, res) => {
 
 })
 
-app.post("/upload1", (req, res) => {
+let buffers = []
+app.post("/upload1", upload.single('file'), (req, res) => {
     // req.file에 업로드한 파일 존재
-    req.on('readable', function(){
-    console.log(req.read());
-  });
-    res.end();
+    buffers.splice(req.body.start, (req.body.end - req.body.start), req.file.buffer)
+    console.log(buffers.length);
+    console.log(req.body.chunkNumber);
+    if (req.body.chunkNumber == buffers.length) {
+        setTimeout(() => {
+            buffers.join('')
+            let result = Buffer.concat(buffers);
+            console.log(result);
+            fs.writeFileSync('uploads/test.mp4', result, (err) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log("잘된듯?");
+                }
+            })
+            buffers = [];
+        }, 3000)
+        res.end();
+
+    } else
+        res.end();
 });
 
 // API Endpoint for uploading file

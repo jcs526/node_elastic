@@ -5,28 +5,37 @@
     <form @submit.prevent="upload">
       <input type="file" required="true" @change="fileChange" />
       <button type="submit">제출</button>
-      <p>{{ numberOfChunks }}</p>
-      <p>{{ chunkCounter }}</p>
+      <p>chunk size : {{ (chunkSize / 1000000) * 0.95 }}MB</p>
+      <p>Total chunk : {{ numberOfChunks }}</p>
+      <p>ing... : {{ chunkCounter }}</p>
+      <p>complete : {{ complete }}</p>
+      <p>complete% : {{ totalPercentComplete }}%</p>
+      <progress :value="totalPercentComplete" max="100"></progress>
+      <div v-if="startTime && endTime">
+        업로드 시간 : {{ (endTime - startTime) / 1000 }}초
+      </div>
     </form>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+// import axios from "axios";
 export default {
   data() {
     return {
       file: "",
       numberOfChunks: 0,
       chunkCounter: 0,
-      chunkSize: 20000000,
+      chunkSize: 10000000,
       chunkStart: 0,
       chunkEnd: 0,
       chunkForm: new FormData(),
-      percentComplete: 0,
+      complete: 0,
       totalPercentComplete: 0,
       start: 0,
       end: 0,
+      startTime: "",
+      endTime: "",
     };
   },
   methods: {
@@ -59,10 +68,20 @@ export default {
 
       formData.append("start", start);
       formData.append("end", end);
+      formData.append("chunkNumber", this.numberOfChunks);
       formData.append("file", piece);
 
       console.log(Array.from(formData.keys()));
       console.log(Array.from(formData.values()));
+      xhr.onload = () => {
+        this.complete++;
+        if (this.complete === this.numberOfChunks) {
+          this.endTime = new Date();
+        }
+        this.totalPercentComplete = Math.ceil(
+          (this.complete / this.numberOfChunks) * 100
+        );
+      };
 
       xhr.send(formData);
     },
@@ -86,29 +105,30 @@ export default {
 
     upload() {
       this.numberOfChunks = Math.ceil(this.file.size / this.chunkSize);
+      this.startTime = new Date();
 
       setTimeout(this.loop, 1);
 
       return;
 
-      const formData = new FormData();
-      formData.append("file", this.file);
+      //   const formData = new FormData();
+      //   formData.append("file", this.file);
 
-      let options = {
-        method: "post",
-        url: "http://127.0.0.1:19901/upload1",
-        data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      };
-      let startTime = new Date();
+      //   let options = {
+      //     method: "post",
+      //     url: "http://127.0.0.1:19901/upload1",
+      //     data: formData,
+      //     headers: {
+      //       "Content-Type": "multipart/form-data",
+      //     },
+      //   };
+      //   let startTime = new Date();
 
-      axios(options).then((res) => {
-        console.log(res);
-        let endTime = new Date();
-        console.log("소요시간", (endTime - startTime) / 1000);
-      });
+      //   axios(options).then((res) => {
+      //     console.log(res);
+      //     let endTime = new Date();
+      //     console.log("소요시간", (endTime - startTime) / 1000);
+      //   });
     },
   },
 };
