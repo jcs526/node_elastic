@@ -10,7 +10,7 @@
       @pause="pausePlay"
     >
       <!-- <source src="http://127.0.0.1:19901/video#t=20" type="video/mp4" /></video 동영상 20초부터 시작-->
-      <source src="http://127.0.0.1:19901/video" type="video/mp4" /></video
+      <source src="http://127.0.0.1:19901/video/sample" type="video/mp4" /></video
     ><br />
     <p>{{ percent || 0 }}%</p>
     <div v-if="complete">수료완료!</div>
@@ -22,7 +22,8 @@
       <option>1.8</option>
       <option>2.0</option>
     </select>
-    <button @click="thumbnail">썸네일 생성!!!</button>
+    <button @click="thumbnail">썸네일 생성!!!</button> 
+    영상출력+썸네일 10장 출력 + 선택한 썸네일외 모두삭제
   </div>
 </template>
 

@@ -25,6 +25,7 @@
     <button @click="submitData">제출</button>
     <button @click="deleteData">삭제</button><br /><br />
     <button @click="thumbnail">썸네일 생성</button>
+    기존+배속막기+플레이어 변경
   </div>
 </template>
 
@@ -54,7 +55,7 @@ export default {
         sources: [
           {
             type: "video/mp4",
-            src: "http://127.0.0.1:19901/video", //url
+            src: "http://127.0.0.1:19901/video/sample", //url
           },
         ],
         poster: "", //
@@ -152,7 +153,6 @@ export default {
       }
     },
     startPlay() {
-      console.log(this.$refs.videoPlayer.player.children()[0]);
       if (!this.complete) {
         this.timeCheck();
         checkComplete = setInterval(() => this.timeCheck(), 250);
@@ -223,6 +223,9 @@ export default {
         get: originalDescriptor.get,
       });
     });
+  },
+  beforeDestroy() {
+    clearInterval(checkComplete);
   },
 };
 </script>

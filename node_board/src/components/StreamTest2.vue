@@ -9,7 +9,7 @@
       @pause="pausePlay"
     >
       <!-- <source src="http://127.0.0.1:19901/video#t=20" type="video/mp4" /></video 동영상 20초부터 시작-->
-      <source src="http://127.0.0.1:19901/video" type="video/mp4" /></video
+      <source src="http://127.0.0.1:19901/video/sample" type="video/mp4" /></video
     ><br />
     <progress max="95" :value="percent"></progress>
     <p>{{ percent || 0 }}%</p>
@@ -27,6 +27,7 @@
     <button @click="submitData">제출</button>
     <button @click="deleteData">삭제</button><br /><br />
     <button @click="thumbnail">썸네일 생성!</button>
+    기존+뒤로가기 막기+제출&삭제추가
   </div>
 </template>
 

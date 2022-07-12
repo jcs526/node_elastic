@@ -11,7 +11,7 @@ import StreamTest4 from '../components/StreamTest4'
 import ExcelDownload from '../components/ExcelDownload'
 import UploadTest from '../components/UploadTest'
 import ChunkUploadTest from '../components/ChunkUploadTest'
-import FormidableTest from '../components/FormidableTest'
+import DiskChunk from '../components/DiskChunk'
 import { store } from '../store/store'
 
 Vue.use(VueRouter);
@@ -88,9 +88,9 @@ export const router = new VueRouter({
             name: 'ChunkUploadTest',
         },
         {
-            path: '/formidable',
-            component: FormidableTest,
-            name: 'FormidableTest',
+            path: '/diskChunk',
+            component: DiskChunk,
+            name: 'DiskChunk',
         },
     ]
 })

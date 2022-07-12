@@ -14,14 +14,25 @@
       <div v-if="startTime && endTime">
         업로드 시간 : {{ (endTime - startTime) / 1000 }}초
       </div>
+
+      <div v-if="endTime && completeTime">
+        업로드부터 생성까지 걸린 시간 : {{ (completeTime - endTime) / 1000 }}초
+        <br>
+        총 걸린 시간 : {{ (completeTime - startTime) / 1000 }}초
+      </div>
     </form>
-    <br>
-    <br>
-    <br>
+    <br />
+    <br />
+    <p>---------------------------DiskStrorage Chunk----------------------------</p>
+    <!-- <video  width="500" height="auto" src="http://127.0.0.1:19901/video/1f2e9337-76ed-40da-a94a-4da1a16932c3" controls></video> -->
+    <br />
   </div>
 </template>
 
 <script>
+import axios from "axios";
+import { v4 } from "uuid";
+import bus from '../utils/bus'
 // import axios from "axios";
 export default {
   data() {
@@ -29,7 +40,7 @@ export default {
       file: "",
       numberOfChunks: 0,
       chunkCounter: 0,
-      chunkSize: 2**22,
+      chunkSize: 2 ** 22,
       chunkStart: 0,
       chunkEnd: 0,
       chunkForm: new FormData(),
@@ -39,6 +50,8 @@ export default {
       end: 0,
       startTime: "",
       endTime: "",
+      uuid: v4(),
+      completeTime: "",
     };
   },
   methods: {
@@ -64,22 +77,25 @@ export default {
     },
     noop() {},
     sendChunk(piece, start, end) {
-      console.log(this.file);
+      // console.log(this.file);
       let formData = new FormData();
       let xhr = new XMLHttpRequest();
 
-      xhr.open("POST", "http://127.0.0.1:19901/upload2", true);
+      xhr.open("POST", "http://127.0.0.1:19901/upload3", true);
 
       formData.append("start", start);
       formData.append("end", end);
       formData.append("numberOfChunks", this.numberOfChunks);
       formData.append("chunkCounter", this.chunkCounter);
       formData.append("totalSize", this.file.size);
+      formData.append("fileName", this.file.name);
+      formData.append("uuid", this.uuid);
       formData.append("file", piece);
 
       // console.log(Array.from(formData.keys()));
       // console.log(Array.from(formData.values()));
       xhr.onload = () => {
+        console.log(xhr.responseText);
         this.complete++;
         if (this.complete === this.numberOfChunks) {
           this.endTime = new Date();
@@ -87,6 +103,15 @@ export default {
         this.totalPercentComplete = Math.ceil(
           (this.complete / this.numberOfChunks) * 100
         );
+
+        if (this.complete === this.numberOfChunks) {
+          bus.$emit('start:spinner')
+          this.merge();
+          this.chunkEnd = 0;
+          this.chunkStart = 0;
+          this.numberOfChunks = 0;
+          this.chunkCounter = 0;
+        }
       };
 
       xhr.send(formData);
@@ -99,7 +124,7 @@ export default {
       if (this.file.size - this.end < 0) {
         this.end = this.file.size;
       }
-      console.log("start", this.start, "end", this.end);
+      // console.log("start", this.start, "end", this.end);
       let s = this.fileSlice(this.file, this.start, this.end);
 
       this.sendChunk(s, this.start, this.end);
@@ -110,31 +135,50 @@ export default {
     },
 
     upload() {
+
       this.numberOfChunks = Math.ceil(this.file.size / this.chunkSize);
       this.startTime = new Date();
 
       setTimeout(this.loop, 1);
+    },
 
-      return;
+    merge() {
+      let formData = new FormData();
 
-      //   const formData = new FormData();
-      //   formData.append("file", this.file);
+      formData.append("dd", "Dd");
 
-      //   let options = {
-      //     method: "post",
-      //     url: "http://127.0.0.1:19901/upload1",
-      //     data: formData,
-      //     headers: {
-      //       "Content-Type": "multipart/form-data",
-      //     },
-      //   };
-      //   let startTime = new Date();
+      formData.append("numberOfChunks", this.numberOfChunks);
+      formData.append("totalSize", this.file.size);
+      formData.append("fileName", this.file.name);
+      formData.append("uuid", this.uuid);
 
-      //   axios(options).then((res) => {
-      //     console.log(res);
-      //     let endTime = new Date();
-      //     console.log("소요시간", (endTime - startTime) / 1000);
-      //   });
+      console.log(formData);
+
+      let options = {
+        method: "post",
+        url: "http://127.0.0.1:19901/merge",
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        data: formData,
+      };
+
+      axios(options).then((res) => {
+        console.log(res.data);
+        this.completeTime = new Date();
+        setTimeout(()=>{
+
+        let video = document.createElement("video");
+          video.src = `http://127.0.0.1:19901/video/${this.uuid}`;
+          video.autoplay = true;
+          video.muted = true;
+          video.controls = true;
+          video.setAttribute('width',500)
+          
+          document.body.appendChild(video);
+          bus.$emit('end:spinner')
+        },10000)
+      });
     },
   },
 };

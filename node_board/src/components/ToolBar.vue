@@ -7,9 +7,9 @@
     <router-link to="/stream3">동영상3</router-link>|
     <router-link to="/stream4">동영상4</router-link>|<br>
     <router-link to="/excel">엑셀</router-link>|
-    <router-link to="/upload">업로드</router-link>|
+    <router-link to="/upload"><span style="text-decoration:line-through">업로드</span></router-link>|
     <router-link to="/chunkupload">청크업로드</router-link>|
-    <router-link to="/formidable">버스보이</router-link>|
+    <router-link to="/diskChunk">디스크청크</router-link>|
     <select v-model="selectOption">
       <option value="title">제목</option>
       <option value="writer">작성자</option>
