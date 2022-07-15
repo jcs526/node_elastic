@@ -12,6 +12,7 @@ export const store = new Vuex.Store({
     state: {
         boardList: [],
         article: {},
+        userId: "testUser"
     },
 
     mutations: {

@@ -12,6 +12,7 @@ import ExcelDownload from '../components/ExcelDownload'
 import UploadTest from '../components/UploadTest'
 import ChunkUploadTest from '../components/ChunkUploadTest'
 import DiskChunk from '../components/DiskChunk'
+import VideoWrite from '../components/VideoWrite'
 import { store } from '../store/store'
 
 Vue.use(VueRouter);
@@ -43,7 +44,7 @@ export const router = new VueRouter({
             name: 'WriteArticle',
         },
         {
-            path: '/article',
+            path: '/article/:id',
             component: ReadArticle,
             name: 'ReadArticle'
         },
@@ -91,6 +92,11 @@ export const router = new VueRouter({
             path: '/diskChunk',
             component: DiskChunk,
             name: 'DiskChunk',
+        },
+        {
+            path: '/videoWrite',
+            component: VideoWrite,
+            name: 'VideoWrite',
         },
     ]
 })

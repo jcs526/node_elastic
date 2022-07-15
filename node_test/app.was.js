@@ -7,13 +7,14 @@ const morgan = require("morgan");
 
 const config = require("./config.json");
 const axios = require("axios");
-var bodyParser = require('body-parser')
 const cors = require('cors');
 const { randomUUID } = require('crypto')
 var ffmpeg = require('fluent-ffmpeg');
 const fs = require("fs");
 const path = require('path');
 const Excel = require('exceljs');
+const e = require("express");
+
 
 const storage = multer.memoryStorage({
     destination: (req, file, cb) => {
@@ -24,7 +25,17 @@ const storage = multer.memoryStorage({
     }
 })
 
+const storage2 = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/')
+    },
+    filename: (req, file, cb) => {
+        cb(null, req.body.fileName + '-' + req.body.chunkCounter + '-' + req.body.uuid + '-' + file.originalname)// 파일 원본이름 저장
+    }
+})
+
 const upload = multer({ storage: storage }); // 미들웨어 생성
+const upload2 = multer({ storage: storage2 }); // 미들웨어 생성
 
 
 let corsOption = {
@@ -40,8 +51,8 @@ if (typeof config == undefined || typeof config == "undefined" || config == null
 }
 
 let app = express();
-app.use(bodyParser.json())
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(cors(corsOption));
 app.use('/', express.static(path.join(__dirname, 'public')));
 app.use(morgan("tiny"))
@@ -56,7 +67,12 @@ app.post("/write", async (req, res) => {
 })
 
 function writeArticle(req, res) {
-    let url = config.baseURL + config.write + randomUUID();
+    let url;
+    if (req.body.uuid) {
+        url = config.baseURL + config.write + req.body.uuid
+    } else {
+        url = config.baseURL + config.write + randomUUID();
+    }
     const auth = config.elastic.id + ":" + config.elastic.password;
     let authorization = Buffer.from(auth, "utf8").toString("base64");
 
@@ -205,6 +221,74 @@ function searchArticle(req, res) {
             response.data.hits.hits.forEach((v, index) => {
                 let date = v._source.date.split('-') || '';
                 let parseDate = [];
+                parseDate.push(date[0])
+                parseDate.push("년 ")
+                parseDate.push(date[1])
+                parseDate.push("월 ")
+                parseDate.push(date[2].split('T')[0])
+                parseDate.push("일 ")
+                parseDate.push(date[2].split('T')[1].split('.')[0])
+
+                let data = {
+                    "id": v._id,
+                    "title": v._source.title,
+                    "writer": v._source.writer,
+                    "date": parseDate.join(""),
+                    "content": v._source.content
+                }
+                jsonData.push(data);
+            });
+
+            res.end(JSON.stringify(jsonData));
+            return;
+        })
+        .catch(err => {
+            console.log(err);
+        })
+}
+
+app.post("/select", async (req, res) => {
+    selectArticle(req, res);
+    return
+})
+
+function selectArticle(req, res) {
+    let url = config.baseURL + config.getList
+    const auth = config.elastic.id + ":" + config.elastic.password;
+    let authorization = Buffer.from(auth, "utf8").toString("base64");
+    let searchKey = req.query.selectOption;
+    let jsonData = {
+        "query": {
+            "bool": {
+                "filter": [
+                    {
+                        "term": {
+                            "_id": req.body.id
+                        }
+                    }
+                ]
+            }
+        },
+        "track_total_hits": true
+    }
+    let postData = JSON.stringify(jsonData);
+
+    let options = {
+        url: url,
+        method: 'GET',
+        headers: {
+            Authorization: 'Basic ' + authorization,
+            'Content-Type': 'application/json'
+        },
+        data: postData
+    };
+
+    axios(options)
+        .then((response) => {
+            let jsonData = [];
+            response.data.hits.hits.forEach((v, index) => {
+                let date = v._source.date.split('-') || '';
+                let parseDate = [];
                 console.log(date, index);
                 parseDate.push(date[0])
                 parseDate.push("년 ")
@@ -232,15 +316,15 @@ function searchArticle(req, res) {
         })
 }
 
-app.get("/video", (req, res) => {
+app.get("/video/:id", (req, res) => {
     const range = req.headers.range;
     if (!range) {
         res.status(400).send("Requires Rang Header");
     }
-    const videoPath = __dirname + "/public/video/sample.mp4"
-    const videoSize = fs.statSync(__dirname + "/public/video/sample.mp4").size;
+    const videoPath = __dirname + `/uploads/output/${req.params.id}.mp4`
+    const videoSize = fs.statSync(__dirname + `/uploads/output/${req.params.id}.mp4`).size;
 
-    const CHUNK_SIZE = 10 ** 6;
+    const CHUNK_SIZE = 10 ** 6 * 2;
     const start = Number(range.replace(/\D/g, ""));
     const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
 
@@ -261,11 +345,9 @@ app.get("/video", (req, res) => {
 })
 
 app.get("/thumbnail/:number", (req, res) => {
-    console.log(req.params.number);
     for (let i = 1; i <= 10; i++) {
         if (i != req.params.number) {
             let filePath = __dirname + `/public/thumbnail/tn_${i}.png`;
-            console.log(filePath);
             fs.unlinkSync(filePath);
         }
     }
@@ -273,23 +355,60 @@ app.get("/thumbnail/:number", (req, res) => {
 })
 
 app.post("/thumbnail", async (req, res) => {
-    console.log("post 오긴옴");
-    ffmpeg(__dirname + '/public/video/sample.mp4')
-        .on('filenames', function (filenames) {
-            console.log("전");
-            console.log('Will generate ' + filenames.join(', '))
-            console.log("후");
-        })
-        .on('end', function () {
-            console.log('Screenshots taken');
-            res.end()
-        })
-        .screenshots({
-            // Will take screens at 20%, 40%, 60% and 80% of the video
-            count: 10,
-            folder: __dirname + '/public/thumbnail',
-            size: '320x?'
-        });
+    // ffmpeg(__dirname + '/public/video/sample.mp4')
+    //     .on('filenames', function (filenames) {
+    //         console.log("전");
+    //         console.log('Will generate ' + filenames.join(', '))
+    //         console.log("후");
+    //     })
+    //     .on('end', function () {
+    //         console.log('Screenshots taken');
+    //         res.end()
+    //     })
+    //     .screenshots({
+    //         // Will take screens at 20%, 40%, 60% and 80% of the video
+    //         count: 10,
+    //         folder: __dirname + '/public/thumbnail',
+    //         size: '320x?'
+    //     });
+    const count = 5;
+    const timestamps = [];
+    const startPositionPercent = 5;
+    const endPositionPercent = 95;
+    const addPercent = (endPositionPercent - startPositionPercent) / (count - 1);
+    let i = 0;
+
+    if (!timestamps.length) {
+        let i = 0;
+        while (i < count) {
+            timestamps.push(`${startPositionPercent + addPercent * i}%`);
+            i = i + 1;
+        }
+    }
+
+    takeScreenshots(__dirname + '/uploads/output/af704387-8484-4d93-9be2-036f4545da97.mp4')
+
+    function takeScreenshots(file) {
+        ffmpeg(file)
+            .on("start", () => {
+                if (i < 1) {
+                    console.log(`start taking screenshots`);
+                }
+            })
+            .on("end", () => {
+                i = i + 1;
+                console.log(`taken screenshot: ${i}`);
+
+                if (i < count) {
+                    takeScreenshots(file);
+                }
+            })
+            .screenshots({
+                count: 1,
+                timemarks: [timestamps[i]],
+                filename: `%b-${i + 1}.jpg`
+            }, path.join(path.dirname(file), `screenshots`));
+    }
 
     // .screenshots({
     //     timestamps: ['50%', '75%'],
@@ -330,13 +449,9 @@ app.post("/thumbnail", async (req, res) => {
 });
 
 app.post("/thumbnail2", async (req, res) => {
-    console.log("post 오긴옴");
     ffmpeg(__dirname + '/public/video/sample.mp4')
         .on('filenames', function (filenames) {
-            console.log("전");
             console.log('Will generate ' + filenames.join(', '))
-            console.log("후");
-            console.log(req.body);
         })
         .on('end', function () {
             console.log('Screenshots taken');
@@ -356,16 +471,9 @@ app.post("/thumbnail2", async (req, res) => {
             count: 1
         });
 
-    // setTimeout(() => {
-    console.log("res 종료");
-    // console.log(qObj);
-    // }, 5000)
-
-
 })
 
 app.post("/stream", (req, res) => {
-    console.log(req.body);
     let url = config.baseURL + config.stream + 123;
     const auth = config.elastic.id + ":" + config.elastic.password;
     let authorization = Buffer.from(auth, "utf8").toString("base64");
@@ -394,7 +502,6 @@ app.post("/stream", (req, res) => {
 })
 
 app.get("/stream", (req, res) => {
-    console.log("왜안옴?");
     let url = config.baseURL + config.getStream;
     const auth = config.elastic.id + ":" + config.elastic.password;
     let authorization = Buffer.from(auth, "utf8").toString("base64");
@@ -429,7 +536,6 @@ app.get("/stream", (req, res) => {
 
     axios(options)
         .then((response) => {
-            console.log(response.data.hits.hits);
             let responseData = {
                 id: response.data.hits.hits[0]._id,
                 currentTime: response.data.hits.hits[0]._source.currnetTime,
@@ -443,6 +549,7 @@ app.get("/stream", (req, res) => {
             console.log(err);
         })
 })
+
 app.post("/stream2", (req, res) => {
     console.log(req.body);
     let url = config.baseURL + config.stream2 + 123;
@@ -522,6 +629,86 @@ app.get("/stream2", (req, res) => {
             console.log(err);
         })
 })
+
+app.put("/userUpdate", (req, res) => {
+    let url = config.baseURL + config.stream2 + req.body.videoId;
+    const auth = config.elastic.id + ":" + config.elastic.password;
+    let authorization = Buffer.from(auth, "utf8").toString("base64");
+    let searchKey = req.query.selectOption;
+    let jsonData = {
+        "currentTime": req.body.currentTime,
+        "maxTime": req.body.maxTime,
+        "complete": req.body.complete,
+        "userId": req.body.userId,
+        "videoId": req.body.videoId
+    }
+    let postData = JSON.stringify(jsonData);
+    console.log("postData", postData);
+
+    let options = {
+        url: url,
+        method: 'PUT',
+        headers: {
+            Authorization: 'Basic ' + authorization,
+            'Content-Type': 'application/json'
+        },
+        data: postData
+    };
+
+    axios(options)
+        .then(res.end())
+})
+
+app.get("/userInfo", (req, res) => {
+    let url = config.baseURL + config.getStream2;
+    const auth = config.elastic.id + ":" + config.elastic.password;
+    let authorization = Buffer.from(auth, "utf8").toString("base64");
+    let searchKey = req.query.selectOption;
+    let jsonData = {
+        "query": {
+          "bool": {
+            "must": [
+              {
+                "match": {
+                  "userId": req.query.userId
+                }
+              }
+            ]
+          }
+        }
+      }
+    let postData = JSON.stringify(jsonData);
+
+    let options = {
+        url: url,
+        method: 'GET',
+        headers: {
+            Authorization: 'Basic ' + authorization,
+            'Content-Type': 'application/json'
+        },
+        data: postData
+    };
+
+    axios(options)
+        .then((response) => {
+            console.log(response.data.hits.hits);
+            let responseData = {
+                id: response.data.hits.hits[0]._id,
+                currentTime: response.data.hits.hits[0]._source.currentTime,
+                maxTime: response.data.hits.hits[0]._source.maxTime,
+                complete: response.data.hits.hits[0]._source.complete
+            }
+            let qObj = JSON.stringify(responseData);
+            console.log("qobj", qObj);
+            res.end(qObj)
+        }
+        ).catch(err => {
+            console.log(err);
+        })
+})
+
+
+
 app.put("/stream", (req, res) => {
     let url = config.baseURL + config.stream2 + 123;
     const auth = config.elastic.id + ":" + config.elastic.password;
@@ -688,6 +875,8 @@ app.get("/excel/:id", async (req, res) => {
 
 })
 
+let buffers = [];
+
 app.post("/upload1", upload.single('file'), (req, res) => {
     // req.file에 업로드한 파일 존재
     buffers.splice(req.body.start, (req.body.end - req.body.start), req.file.buffer)
@@ -727,7 +916,6 @@ app.post("/api/upload", (req, res) => {
     console.log(form);
 });
 
-const writeStream = fs.createWriteStream('uploads/text.txt');
 const data = {};
 
 
@@ -735,33 +923,55 @@ app.post("/upload2", upload.single('file'), (req, res) => {
     data[`$${req.body.chunkCounter}`] = req.file.buffer
     let result = [];
     if (Object.keys(data).length == req.body.numberOfChunks
-    // &&req.body.chunkCounter==req.body.numberOfChunks-1
+        // &&req.body.chunkCounter==req.body.numberOfChunks-1
     ) {
-        
-
-        console.log("dd");
         for (let i = 1; i <= Object.keys(data).length; i++) {
             result.push(data[`$${i}`]);
         }
         let buffers = Buffer.concat(Object.values(result));;
-        console.log(buffers);
-            fs.writeFile('uploads/test.mp4', buffers, (err) => {
-                if (err) {
-                    console.log(err);
-                } else {
-                    console.log("저장완료");
-                }
-            })
-            res.end();
+        fs.writeFile('uploads/test.mp4', buffers, (err) => {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log("저장완료");
+            }
+        })
+        res.end();
     } else {
-        console.log("지나갑니다~");
         // if(writeStream.length===req.body.totalSize){
         //     writeStream.end()
         // }
-
         res.end();
     }
+})
+
+app.post("/upload3", upload2.single('file'), (req, res) => {
+
+    res.end(req.body.chunkCounter);
+})
+
+app.post("/merge", upload.single('fileName'), (req, res) => {
+    console.log(req.body);
+    let ws = fs.createWriteStream(__dirname + `/uploads/output/${req.body.uuid}.mp4`);
 
 
+    for (let i = 1; i <= req.body.numberOfChunks; i++) {
+        let read = fs.readFileSync(__dirname + `/uploads/${req.body.fileName}-${i}-${req.body.uuid}-blob`)
+        ws.write(read)
+    }
+    ws.end();
+    for (let i = 1; i <= req.body.numberOfChunks; i++) {
+        let s = fs.unlinkSync(__dirname + `/uploads/${req.body.fileName}-${i}-${req.body.uuid}-blob`
+            // ,(err)=>{
+            //     if(err){
+            //         console.log(err);
+            //     }else{
+            //         console.log("삭제굿",i);
+            //     }
+            // }
+        )
+    }
+    console.log("합체완성!!!");
+    res.end("생성완료랍니다");
 })
 

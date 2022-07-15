@@ -10,6 +10,7 @@
     <router-link to="/upload"><span style="text-decoration:line-through">업로드</span></router-link>|
     <router-link to="/chunkupload">청크업로드</router-link>|
     <router-link to="/diskChunk">디스크청크</router-link>|
+    <router-link to="/videoWrite">영상글업로드</router-link>|
     <select v-model="selectOption">
       <option value="title">제목</option>
       <option value="writer">작성자</option>

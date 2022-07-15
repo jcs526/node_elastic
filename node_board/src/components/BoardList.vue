@@ -7,7 +7,7 @@
         <th>시간</th>
       </tr>
       <tr v-for="(item, index) in boardList" :key="index" class="post">
-      <router-link to="/article" class="link-text">
+      <router-link :to="/article/+item.id" class="link-text">
         <td  @click="selectAritcle(item)" class="title">{{ item.title }}</td>
         </router-link>
         <td>{{ item.writer }}</td>
