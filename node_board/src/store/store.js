@@ -21,6 +21,9 @@ export const store = new Vuex.Store({
         },
         SET_ARTICLE(state, data) {
             state.article = data;
+        },
+        changeUser(state,data){
+            state.userId=data;
         }
     },
 
@@ -77,8 +80,6 @@ export const store = new Vuex.Store({
             fetch_write(data)
                 .then((res) => {
                     console.log("res:", res);
-                    router.push("/list");
-                    bus.$emit('end:spinner');
                 });
         }
     },

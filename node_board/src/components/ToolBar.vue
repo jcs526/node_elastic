@@ -18,6 +18,12 @@
     </select>
     <input type="text" @keyup.enter="search" v-model="searchValue" />
     <button @click="search">검색!</button>
+    현재 유저 : 
+    <select  @change="changeUser" ref="selectUser">
+      <option value="testUser">testUser</option>
+      <option value="testUser2">testUser2</option>
+      <option value="testUser3">testUser3</option>
+    </select>
   </div>
 </template>
 
@@ -30,6 +36,10 @@ export default {
     };
   },
   methods: {
+    changeUser(){
+      console.log('changeUser',this.$refs.selectUser.value);
+      this.$store.commit('changeUser',this.$refs.selectUser.value);
+    },
     search() {
       this.$store.dispatch("search", {
         searchValue: this.searchValue,

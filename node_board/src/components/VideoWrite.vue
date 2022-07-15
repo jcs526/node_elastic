@@ -4,7 +4,6 @@
     <br />
     <form @submit.prevent="upload(), write()">
       제목 : <input type="text" v-model="title" /><br />
-      작성자 : <input type="text" v-model="writer" /><br />
       내용 : <textarea rows="10" cols="50" v-model="content" /><br />
       <input type="file" required="true" @change="fileChange" />
       <button type="submit">제출</button>
@@ -17,7 +16,7 @@
       <div v-if="startTime && endTime">
         업로드 시간 : {{ (endTime - startTime) / 1000 }}초
       </div>
-
+      <div v-if="endTime && !completeTime">생성중...</div>
       <div v-if="endTime && completeTime">
         업로드부터 생성까지 걸린 시간 : {{ (completeTime - endTime) / 1000 }}초
         <br />
@@ -43,7 +42,6 @@ export default {
   data() {
     return {
       title: "",
-      writer: "",
       content: "",
       file: "",
       numberOfChunks: 0,
@@ -62,6 +60,11 @@ export default {
       completeTime: "",
     };
   },
+  computed: {
+    writer() {
+      return this.$store.state.userId;
+    },
+  },
   methods: {
     write() {
       let formData = {
@@ -69,7 +72,7 @@ export default {
         writer: this.writer,
         content: this.content,
         date: new Date(),
-        uuid: this.uuid
+        uuid: this.uuid,
       };
       console.log("formData", formData);
       let data = JSON.stringify(formData);
@@ -130,8 +133,6 @@ export default {
           this.merge();
           this.chunkEnd = 0;
           this.chunkStart = 0;
-          this.numberOfChunks = 0;
-          this.chunkCounter = 0;
         }
       };
 
@@ -195,6 +196,7 @@ export default {
           video.setAttribute("width", 500);
 
           document.body.appendChild(video);
+          this.$router.push("/list");
           bus.$emit("end:spinner");
         }, 15000);
       });
