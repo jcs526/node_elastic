@@ -666,17 +666,17 @@ app.get("/userInfo", (req, res) => {
     let searchKey = req.query.selectOption;
     let jsonData = {
         "query": {
-          "bool": {
-            "must": [
-              {
-                "match": {
-                  "userId": req.query.userId
-                }
-              }
-            ]
-          }
+            "bool": {
+                "must": [
+                    {
+                        "match": {
+                            "userId": req.query.userId
+                        }
+                    }
+                ]
+            }
         }
-      }
+    }
     let postData = JSON.stringify(jsonData);
 
     let options = {
@@ -975,3 +975,45 @@ app.post("/merge", upload.single('fileName'), (req, res) => {
     res.end("생성완료랍니다");
 })
 
+app.get('/comment', (req, res) => {
+    orderList(req,res);
+});
+
+app.post('/comment',(req,res)=>{
+    console.log(req.body);
+    let rs = fs.readFileSync('comment.json');
+
+    let list = JSON.parse(rs);
+    req.body.date = new Date();
+    
+    list.push(req.body)
+    // console.log('list : ',list);
+    let ws = fs.writeFileSync('comment.json',JSON.stringify(list))
+    orderList(req,res);
+})
+
+function orderList(req,res){
+    let rs = fs.readFileSync('comment.json');
+    let disorder = JSON.parse(rs);
+    let ordered = []
+
+
+    function order(parent, depth) {
+        disorder
+            .filter((v) => {
+                if (v.depth === depth && v.parent === parent) {
+                    return v;
+                }
+            })
+            // .sort((a, b) => {
+            //     a.date - b.date;
+            // })
+            .forEach((v) => {
+                ordered.push(v);
+                order(v.name, depth + 1);
+            });
+    }
+    order('main',1)
+    // console.log(ordered);
+    res.end(JSON.stringify(ordered))
+}

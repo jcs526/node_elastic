@@ -13,6 +13,7 @@ import UploadTest from '../components/UploadTest'
 import ChunkUploadTest from '../components/ChunkUploadTest'
 import DiskChunk from '../components/DiskChunk'
 import VideoWrite from '../components/VideoWrite'
+import NestedComment from '../components/NestedComment'
 import { store } from '../store/store'
 
 Vue.use(VueRouter);
@@ -97,6 +98,11 @@ export const router = new VueRouter({
             path: '/videoWrite',
             component: VideoWrite,
             name: 'VideoWrite',
+        },
+        {
+            path: '/nestedComment',
+            component: NestedComment,
+            name: 'NestedCommnet',
         },
     ]
 })
