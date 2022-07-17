@@ -5,7 +5,7 @@
       :key="index"
       v-bind:style="{
         border: '1px solid black',
-        paddingLeft: `${comment.depth * 20}px`,
+        paddingLeft: `${(comment.depth - 1) * 20}px`,
       }"
     >
       <div @click="focusON(index)">
@@ -13,9 +13,10 @@
         <div>date : {{ comment.date }}</div>
         <div>{{ comment.content }}</div>
         <div>depth : {{ comment.depth }}</div>
+        <button @click="deleteComment(comment.uuid)">삭제</button>
       </div>
       <div v-if="focus == index">
-        <form @submit.prevent="writeComent(comment.depth, comment.name)">
+        <form @submit.prevent="writeComent(comment.depth, comment.uuid)">
           작성자 : <input type="text" name="name" /> 내용 :
           <input type="text" name="content" />
           <button type="submit">제출!</button>
@@ -38,8 +39,6 @@ export default {
     return {
       name: "",
       content: "",
-      uuid: self.crypto.randomUUID(),
-      disorder: [],
       ordered: [],
       focus: -1,
     };
@@ -47,23 +46,34 @@ export default {
   computed: {},
 
   methods: {
+    deleteComment(uuid) {
+      event.stopPropagation()
+      let data = {
+        uuid:uuid
+      };
+      axios.post("http://127.0.0.1:19901/deleteComment", data)
+      .then((res) => {
+        console.log(res.data);
+        this.ordered = res.data;
+      });
+    },
     focusON(index) {
       this.focus = this.focus === index ? -1 : index;
     },
     writeComent(depth, parent) {
+      let form = event.target;
       let data = {
-        name: event.target.name.value,
-        content: event.target.content.value,
+        name: form.name.value,
+        content: form.content.value,
         parent,
         depth: depth + 1,
+        uuid: self.crypto.randomUUID(),
       };
-      axios.post("http://127.0.0.1:19901/comment", data);
-    },
-    dataInput() {
-      this.disorder.push({
-        name: this.name,
-        content: this.content,
-        date: new Date(),
+      axios.post("http://127.0.0.1:19901/comment", data).then((res) => {
+        console.log(res.data);
+        this.ordered = res.data;
+        form.name.value = "";
+        form.content.value = "";
       });
     },
     startOrder() {

@@ -976,23 +976,38 @@ app.post("/merge", upload.single('fileName'), (req, res) => {
 })
 
 app.get('/comment', (req, res) => {
-    orderList(req,res);
+    orderList(req, res);
 });
 
-app.post('/comment',(req,res)=>{
+app.post('/comment', (req, res) => {
     console.log(req.body);
     let rs = fs.readFileSync('comment.json');
 
     let list = JSON.parse(rs);
     req.body.date = new Date();
-    
+
     list.push(req.body)
     // console.log('list : ',list);
-    let ws = fs.writeFileSync('comment.json',JSON.stringify(list))
-    orderList(req,res);
+    let ws = fs.writeFileSync('comment.json', JSON.stringify(list))
+    orderList(req, res);
+})
+app.post('/deleteComment', (req, res) => {
+    console.log(req.body);
+    let rs = fs.readFileSync('comment.json');
+
+    let list = JSON.parse(rs);
+    req.body.date = new Date();
+
+    let processed = list.filter(v => {
+        if (v.uuid !== req.body.uuid)
+            return v;
+    })
+    // console.log('list : ',list);
+    let ws = fs.writeFileSync('comment.json', JSON.stringify(processed))
+    orderList(req, res);
 })
 
-function orderList(req,res){
+function orderList(req, res) {
     let rs = fs.readFileSync('comment.json');
     let disorder = JSON.parse(rs);
     let ordered = []
@@ -1010,10 +1025,10 @@ function orderList(req,res){
             // })
             .forEach((v) => {
                 ordered.push(v);
-                order(v.name, depth + 1);
+                order(v.uuid, depth + 1);
             });
     }
-    order('main',1)
+    order('main', 1)
     // console.log(ordered);
     res.end(JSON.stringify(ordered))
 }
