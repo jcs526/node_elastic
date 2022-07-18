@@ -17,14 +17,14 @@
       </div>
       <div v-if="focus == index">
         <form @submit.prevent="writeComent(comment.depth, comment.uuid)">
-          작성자 : <input type="text" name="name" /> 내용 :
+          내용 :
           <input type="text" name="content" />
           <button type="submit">제출!</button>
         </form>
       </div>
     </div>
     <form @submit.prevent="writeComent(0, 'main')">
-      작성자 : <input type="text" name="name" /> 내용 :
+      내용 :
       <input type="text" name="content" />
       <button type="submit">제출!</button>
     </form>
@@ -63,7 +63,7 @@ export default {
     writeComent(depth, parent) {
       let form = event.target;
       let data = {
-        name: form.name.value,
+        name: this.$store.state.userId,
         content: form.content.value,
         parent,
         depth: depth + 1,
