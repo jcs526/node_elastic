@@ -14,6 +14,7 @@ import ChunkUploadTest from '../components/ChunkUploadTest'
 import DiskChunk from '../components/DiskChunk'
 import VideoWrite from '../components/VideoWrite'
 import NestedComment from '../components/NestedComment'
+import ProgressUpload from '../components/ProgressUpload'
 import { store } from '../store/store'
 
 Vue.use(VueRouter);
@@ -102,7 +103,12 @@ export const router = new VueRouter({
         {
             path: '/nestedComment',
             component: NestedComment,
-            name: 'NestedCommnet',
+            name: 'NestedComment',
+        },
+        {
+            path: '/progressUpload',
+            component: ProgressUpload,
+            name: 'ProgressUpload',
         },
     ]
 })
