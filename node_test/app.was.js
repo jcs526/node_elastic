@@ -999,8 +999,7 @@ app.post('/deleteComment', (req, res) => {
     req.body.date = new Date();
 
     let processed = list.filter(v => {
-        if (v.uuid !== req.body.uuid)
-            return v;
+        return v.uuid !== req.body.uuid
     })
     // console.log('list : ',list);
     let ws = fs.writeFileSync('comment.json', JSON.stringify(processed))
@@ -1016,9 +1015,7 @@ function orderList(req, res) {
     function order(parent, depth) {
         disorder
             .filter((v) => {
-                if (v.depth === depth && v.parent === parent) {
-                    return v;
-                }
+                    return v.depth === depth && v.parent === parent;
             })
             // .sort((a, b) => {
             //     a.date - b.date;
